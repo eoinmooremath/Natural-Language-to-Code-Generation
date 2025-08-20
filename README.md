@@ -1,120 +1,45 @@
-# Robot-LoRA: Natural Language Robot Programming
+# Natural Language to Code Generation
 
-A comprehensive LoRA (Low-Rank Adaptation) fine-tuning system for converting natural language commands into executable robot control code. This project enables intuitive robot programming through conversational interfaces.
+A comprehensive LoRA (Low-Rank Adaptation) fine-tuning system for converting natural language commands into structured API code. This project demonstrates synthetic data generation and model fine-tuning techniques using a simulated robot API as a case study.
 
-## 🚀 Features
+## Overview
 
-- **Natural Language Understanding**: Convert human commands like "pick up the red ball" into robot API calls
-- **Large-Scale Dataset Generation**: Async dataset generator creating 75,000+ training examples
-- **LoRA Fine-tuning**: Efficient training using Parameter-Efficient Fine-Tuning (PEFT)
-- **Interactive Demo**: Gradio-based web interface for testing trained models
-- **Multi-Category Commands**: Support for movement, manipulation, sensors, navigation, and complex sequences
-- **Production-Ready**: Optimized for H100/A100 GPUs with comprehensive training pipeline
+This project showcases modern ML engineering practices for code generation:
 
-## 📋 Table of Contents
+- **Synthetic Dataset Creation**: Async generation of 75,000+ training examples using OpenAI APIs
+- **LoRA Fine-tuning**: Parameter-efficient training of CodeLlama models
+- **Natural Language to Code**: Translation of human commands into structured API calls
+- **Production Pipeline**: End-to-end training and evaluation system
 
-- [Installation](#installation)
-- [Quick Start](#quick-start)
-- [Dataset Generation](#dataset-generation)
-- [Training](#training)
-- [Demo](#demo)
-- [Project Structure](#project-structure)
-- [Usage Examples](#usage-examples)
-- [Configuration](#configuration)
-- [Contributing](#contributing)
+**Note**: This uses a fictional robot API designed specifically for demonstrating code generation techniques. The API calls are syntactically valid Python but don't control actual hardware.
 
-## 🔧 Installation
+## Key Features
 
-### Prerequisites
-- Python 3.9+
-- CUDA-compatible GPU (recommended)
-- OpenAI API key (for dataset generation)
+- **Large-Scale Synthetic Data**: Async pipeline generating diverse command-to-code pairs
+- **Category-Weighted Sampling**: Optimized training across different command types
+- **Interactive Demo**: Side-by-side comparison of base vs fine-tuned models
+- **Production-Ready Training**: H100/A100 optimized with BF16 precision and gradient checkpointing
 
-### Setup
-
-1. **Clone the repository**
-```bash
-git clone https://github.com/your-username/Robot-LoRA.git
-cd Robot-LoRA
-```
-
-2. **Install dependencies**
-```bash
-pip install -r requirements.txt
-# OR using uv (faster)
-uv sync
-```
-
-3. **Set up environment variables**
-```bash
-export OPENAI_API_KEY="your_openai_api_key_here"
-```
-
-## 🚀 Quick Start
+## Quick Start
 
 ### 1. Generate Training Data
 ```bash
 python dataset_generator.py
 ```
-This creates a comprehensive dataset with ~75,000 examples across multiple command categories.
+Creates ~75,000 examples across movement, manipulation, navigation, and complex command categories.
 
 ### 2. Train the Model
 ```bash
-python train_robot.py --data-json robot_dataset.json --output-dir ./models/robot-lora
+python train_robot_lora_list.py --data-json robot_full_dataset.json --output-dir ./outputs/code-gen-lora
 ```
 
-### 3. Run the Demo
+### 3. Run Interactive Demo
 ```bash
-python robot_demo.py --base-model codellama/CodeLlama-7b-Python-hf --lora-path ./models/robot-lora
+python robot_demo.py --lora ./outputs/code-gen-lora
 ```
 
-## 📊 Dataset Generation
+## Example Transformations
 
-The async dataset generator creates diverse training examples across multiple categories:
-
-- **Movement**: Forward, backward, turning, positioning (`15,000 examples`)
-- **Manipulation**: Picking, dropping, gripping (`12,000 examples`)
-- **Sensors**: Scanning, detection, measurements (`8,000 examples`)
-- **Navigation**: Room movement, path following (`8,000 examples`)
-- **Complex**: Multi-step command sequences (`6,000 examples`)
-- **Safety**: Cautious and careful operations (`3,000 examples`)
-- **And more categories...** (`23,000 additional examples`)
-
-### Rate-Limited Generation
-The generator respects OpenAI API limits:
-- 3 concurrent requests maximum
-- 0.5-second delays between requests
-- Automatic retry with exponential backoff
-- Estimated completion: ~3.5 hours for full dataset
-
-## 🎯 Training
-
-### Single GPU Training
-```bash
-python train_robot.py \
-    --data-json robot_dataset.json \
-    --output-dir ./models/robot-lora \
-    --num-epochs 3 \
-    --batch-size 4 \
-    --learning-rate 1e-4
-```
-
-### Key Training Features
-- **LoRA Configuration**: r=32, alpha=64 for efficient fine-tuning
-- **Response-Only Loss**: Only the robot code output contributes to loss
-- **Dynamic Padding**: Optimized for variable-length sequences
-- **BF16 Precision**: Memory-efficient training on modern GPUs
-- **Early Stopping**: Prevents overfitting with validation monitoring
-
-## 🎮 Demo Interface
-
-The Gradio demo provides:
-- **Side-by-side comparison** of base model vs fine-tuned model
-- **Interactive chat interface** for testing commands
-- **Real-time generation** with stopping criteria
-- **Example commands** for quick testing
-
-### Example Interactions
 ```
 Input: "go to the kitchen and pick up any red objects"
 Output: 
@@ -123,116 +48,63 @@ robot.sensors.detect(object_type="objects")
 robot.gripper.pick_up(object_type="objects", color="red", size="any")
 ```
 
-## 📁 Project Structure
-
 ```
-Robot-LoRA/
-├── dataset_generator.py    # Async dataset generation with OpenAI
-├── train_robot.py         # LoRA fine-tuning pipeline
-├── robot_demo.py          # Gradio demo interface
-├── create_eos_data.py     # EOS token processing utilities
-├── to_step_list.py        # Multi-line command processing
-├── pyproject.toml         # Project dependencies
-├── requirements.txt       # Pip-compatible requirements
-├── examples/             # Example scripts and tutorials
-├── docs/                 # Documentation
-└── models/               # Trained model outputs
+Input: "scan the area then move forward 3 meters"
+Output:
+robot.sensors.scan(range=10.0, angle=360)
+robot.move_forward(distance=3.0, speed=1.0)
 ```
 
-## 🤖 Robot API Specification
+## Technical Highlights
 
-The system generates code for this robot API:
+### Synthetic Data Generation
+- **Async Processing**: 15x speedup over sequential generation
+- **Rate Limiting**: Respects OpenAI API constraints with exponential backoff
+- **Category Diversity**: 12 command categories from simple movements to complex sequences
+- **Quality Control**: LLM-based validation and deduplication
 
-### Movement
-- `robot.move_forward(distance=float, speed=float)`
-- `robot.move_backward(distance=float, speed=float)`
-- `robot.turn(direction="left"|"right", angle=int, speed=float)`
-- `robot.move_to(x=float, y=float, z=float)`
-- `robot.stop()`
+### Model Training
+- **LoRA Configuration**: r=32, alpha=64 for efficient fine-tuning
+- **Response-Only Loss**: Masks prompt tokens, trains only on code output
+- **Dynamic Padding**: Optimized batching for variable-length sequences
+- **Early Stopping**: Validation-based convergence with paired loss logging
 
-### Manipulation
-- `robot.gripper.pick_up(object_type=str, color=str, size=str)`
-- `robot.gripper.drop(location=str)`
-- `robot.gripper.grab(object_name=str, force=float)`
-- `robot.gripper.release()`
+## Simulated Robot API
 
-### Sensors
-- `robot.sensors.scan(range=float, angle=int)`
-- `robot.sensors.detect(object_type=str)`
-- `robot.sensors.measure_distance(direction=str)`
+The fictional API includes realistic robotics operations:
 
-### Navigation
-- `robot.navigate.go_to_room(room=str)`
-- `robot.navigate.follow_path(path_name=str, speed=float)`
-- `robot.navigate.return_home()`
+**Movement**: `move_forward()`, `turn()`, `move_to()`  
+**Manipulation**: `gripper.pick_up()`, `gripper.drop()`  
+**Sensors**: `sensors.scan()`, `sensors.detect()`  
+**Navigation**: `navigate.go_to_room()`, `navigate.return_home()`
 
-## ⚙️ Configuration
+## Project Structure
 
-### Dataset Generation Config
-```python
-config = AsyncGenerationConfig(
-    examples_per_batch=50,          # Examples per API call
-    max_concurrent_requests=3,      # Respect rate limits
-    delay_between_batches=1.0,      # Batch delay (seconds)
-    request_delay=0.5,              # Request delay (seconds)
-    model="gpt-5-mini",            # OpenAI model
-    timeout=60                      # Request timeout
-)
+```
+├── dataset_generator.py      # Async synthetic data generation
+├── train_robot_lora_list.py  # LoRA fine-tuning pipeline  
+├── robot_demo.py            # Interactive Gradio demo
+├── outputs/                 # Trained models and logs
+└── examples/               # Sample datasets and configs
 ```
 
-### Training Config
-```python
-config = ModelCfg(
-    model_name="codellama/CodeLlama-7b-Python-hf",
-    max_length=256,
-    lora_r=32,
-    lora_alpha=64,
-    batch_size=4,
-    learning_rate=1e-4,
-    num_epochs=3
-)
-```
+## Applications
 
-## 🔬 Performance
+This codebase demonstrates techniques applicable to:
 
-### Training Metrics
-- **Training Time**: ~2-4 hours on H100 (75K examples)
-- **Memory Usage**: ~24GB VRAM with BF16
-- **Final Loss**: Typically converges to ~0.1-0.2
-- **Validation Accuracy**: >95% on robot code generation
+- **Code generation** from natural language
+- **API documentation** to code translation  
+- **Domain-specific language** creation
+- **Instruction following** for technical tasks
+- **Large-scale synthetic data** creation
 
-### Generation Quality
-- **Command Understanding**: High accuracy on diverse natural language
-- **API Compliance**: Generated code follows robot API specification
-- **Multi-step Sequences**: Handles complex command chains effectively
-- **Parameter Accuracy**: Correct use of distances, speeds, angles
+## Requirements
 
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Make your changes
-4. Commit your changes (`git commit -m 'Add amazing feature'`)
-5. Push to the branch (`git push origin feature/amazing-feature`)
-6. Open a Pull Request
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-- **OpenAI** for GPT models used in dataset generation
-- **Meta** for CodeLlama base models
-- **Hugging Face** for transformers and PEFT libraries
-- **Microsoft** for LoRA technique
-
-## 📞 Contact
-
-- **Issues**: Please use GitHub issues for bug reports
-- **Discussions**: Use GitHub discussions for questions
-- **Email**: [your-email@example.com]
+- Python 3.9+
+- PyTorch with CUDA support
+- Transformers, PEFT, Datasets libraries
+- OpenAI API key (for data generation)
 
 ---
 
-⭐ **Star this repository if you find it useful!**
+This project serves as a complete example of modern NLP engineering, from synthetic data creation through model deployment, using code generation as the target task.
